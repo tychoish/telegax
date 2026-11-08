@@ -28,9 +28,9 @@ jobs:
       - name: Lint Source Code
         uses: tychoish/elisp-ci/lint@main
         with:
-          dependencies: "sprite telega alert"
+          dependencies: "sprite telega alert tracking"
 
       - name: Run Tests
         uses: tychoish/elisp-ci@main
         with:
-          dependencies: "sprite telega alert"
+          dependencies: "sprite telega alert tracking"

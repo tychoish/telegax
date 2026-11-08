@@ -3,7 +3,7 @@
 ;; Author: Tycho Garen <tycho@tychoish.com>
 ;; Maintainer: Tycho Garen <tycho@tychoish.com>
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "29.1") (sprite "0.1") (telega "0.8.0") (alert "1.2"))
+;; Package-Requires: ((emacs "29.1") (sprite "0.1") (telega "0.8.0") (alert "1.2") (tracking "2.0"))
 ;; Keywords: convenience, comm, processes
 ;; URL: https://github.com/tychoish/telegax
 
@@ -283,13 +283,13 @@ non-interactive callers never see a prompt."
   (when-let* ((bufs (thread-last (buffer-list)
                       (seq-filter (lambda (b)
                                     (with-current-buffer b
-                                      (derived-mode-p 'telega-chat-mode))))))
-              (_ (or (not (called-interactively-p 'interactive))
-                     (telegax--confirm
-                      (format "Kill %d telega chat buffer%s? "
-                              (length bufs)
-                              (if (= 1 (length bufs)) "" "s"))))))
-    (mapc #'kill-buffer bufs)))
+                                      (derived-mode-p 'telega-chat-mode)))))))
+    (when (or (not (called-interactively-p 'interactive))
+              (telegax--confirm
+               (format "Kill %d telega chat buffer%s? "
+                       (length bufs)
+                       (if (= 1 (length bufs)) "" "s"))))
+      (mapc #'kill-buffer bufs))))
 
 ;;;###autoload
 (defun telegax-force-kill ()
@@ -504,7 +504,8 @@ Stands in for `telega-prefix-map' until telega has been loaded."
   (if telegax-mode
       (progn
         (require 'tracking)
-        (require 'telega-alert)
+        (require 'telega-alert (or (locate-library "telega-alert")
+                                   "contrib/telega-alert"))
         (map-do #'set telegax-settings)
         (when (eq system-type 'darwin)
           (setq-default alert-default-style 'osx-notifier))
@@ -524,7 +525,8 @@ Stands in for `telega-prefix-map' until telega has been loaded."
         (telega-alert-mode 1)
         (when (telega-server-live-p)
           (telegax-setup)))
-    (telega-alert-mode -1)
+    (when (fboundp 'telega-alert-mode)
+      (telega-alert-mode -1))
     (telega-mode-line-mode -1)
     (advice-remove 'telega-chat-folders #'telegax--hide-chat-folders)
     (keymap-set telegax-global-mode-map "C-c v" #'telegax-prefix-dispatch)

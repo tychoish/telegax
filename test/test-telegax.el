@@ -420,7 +420,8 @@
         (telegax--sleeping nil))
     (unwind-protect
         (progn
-          (cl-letf (((symbol-function 'telega-server-live-p) (lambda () t)))
+          (cl-letf (((symbol-function 'telega-server-live-p) (lambda () t))
+                    ((symbol-function 'telegax-start-logind-watch) #'ignore))
             (telegax-mode 1))
           (should (advice-member-p #'telegax--notify-skip-own
                                    'telega-notifications-msg-notify-p))
@@ -429,6 +430,12 @@
                                        'telega-notifications-msg-notify-p))
           (should-not telegax-chatbuf-bury-idle-timer)
           (should-not telegax-chatbuf-kill-idle-timer))
+      (telegax-mode -1))))
+
+(ert-deftest telegax/disable-before-alert-load ()
+  "Disabling after a partial activation does not require alert mode."
+  (let ((telegax-mode nil))
+    (cl-letf (((symbol-function 'telega-alert-mode) nil))
       (telegax-mode -1))))
 
 (ert-deftest telegax/timer-customization-respects-disabled-mode ()
